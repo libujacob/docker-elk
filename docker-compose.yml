@@ -1,5 +1,8 @@
 version: '2'
 
+volumes:
+  elastic-data:
+
 services:
 
   elasticsearch:
@@ -16,6 +19,8 @@ services:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
     networks:
       - elk
+    volumes:
+      - elastic-data:/usr/share/elasticsearch/data
 
   logstash:
     build:
