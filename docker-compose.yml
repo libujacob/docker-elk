@@ -16,8 +16,9 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
+    restart: on-failure
     environment:
-      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      ES_JAVA_OPTS: "-Xmx1g -Xms1g"
     networks:
       - elk
 
@@ -32,8 +33,9 @@ services:
     ports:
       - "5044:5044"
       - "9600:9600"
+    restart: on-failure
     environment:
-      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+      LS_JAVA_OPTS: "-Xmx1g -Xms1g"
     networks:
       - elk
     depends_on:
@@ -48,6 +50,7 @@ services:
       - ./kibana/config/:/usr/share/kibana/config:ro
     ports:
       - "5601:5601"
+    restart: on-failure
     networks:
       - elk
     depends_on:
