@@ -1,0 +1,516 @@
+########################## Metricbeat Configuration ###########################
+
+# This file is a full configuration example documenting all non-deprecated
+# options in comments. For a shorter configuration example, that contains only
+# the most common options, please see metricbeat.yml in the same directory.
+#
+# You can find the full configuration reference here:
+# https://www.elastic.co/guide/en/beats/metricbeat/index.html
+
+#============================  Config Reloading ===============================
+
+# Config reloading allows to dynamically load modules. Each file which is
+# monitored must contain one or multiple modules as a list.
+# metricbeat.config.modules:
+
+  # Glob pattern for configuration reloading
+  # path: ${path.config}/conf.d/*.yml
+
+  # Period on which files under path should be checked for changes
+  # reload.period: 10s
+
+  # Set to true to enable config reloading
+  # reload.enabled: false
+
+# Maximum amount of time to randomly delay the start of a metricset. Use 0 to
+# disable startup delay.
+# metricbeat.max_start_delay: 10s
+
+#============================== Autodiscover ===================================
+
+# Autodiscover allows you to detect changes in the system and spawn new modules
+# as they happen.
+
+#metricbeat.autodiscover:
+  # List of enabled autodiscover providers
+#  providers:
+#    - type: docker
+#      templates:
+#        - condition:
+#            equals.docker.container.image: etcd
+#          config:
+#            - module: etcd
+#              metricsets: ["leader", "self", "store"]
+#              period: 10s
+#              hosts: ["${host}:2379"]
+
+#==========================  Modules configuration ============================
+metricbeat.modules:
+
+#------------------------------- System Module -------------------------------
+- module: system
+  metricsets:
+    - cpu             # CPU usage
+    - load            # CPU load averages
+    - memory          # Memory usage
+    - network         # Network IO
+    - process         # Per process metrics
+    - process_summary # Process summary
+    - uptime          # System Uptime
+    #- core           # Per CPU core usage
+    #- diskio         # Disk IO
+    #- filesystem     # File system usage for each mountpoint
+    #- fsstat         # File system summary metrics
+    #- raid           # Raid
+    #- socket         # Sockets and connection info (linux only)
+  enabled: true
+  period: 10s
+  processes: ['.*']
+
+  # Configure the metric types that are included by these metricsets.
+  cpu.metrics:  ["percentages"]  # The other available options are normalized_percentages and ticks.
+  core.metrics: ["percentages"]  # The other available option is ticks.
+
+  # A list of filesystem types to ignore. The filesystem metricset will not
+  # collect data from filesystems matching any of the specified types, and
+  # fsstats will not include data from these filesystems in its summary stats.
+  # If not set, types associated to virtual filesystems are automatically
+  # added when this information is available in the system (e.g. the list of
+  # `nodev` types in `/proc/filesystem`).
+  #filesystem.ignore_types: []
+
+  # These options allow you to filter out all processes that are not
+  # in the top N by CPU or memory, in order to reduce the number of documents created.
+  # If both the `by_cpu` and `by_memory` options are used, the union of the two sets
+  # is included.
+  #process.include_top_n:
+
+    # Set to false to disable this feature and include all processes
+    #enabled: true
+
+    # How many processes to include from the top by CPU. The processes are sorted
+    # by the `system.process.cpu.total.pct` field.
+    #by_cpu: 0
+
+    # How many processes to include from the top by memory. The processes are sorted
+    # by the `system.process.memory.rss.bytes` field.
+    #by_memory: 0
+
+  # If false, cmdline of a process is not cached.
+  #process.cmdline.cache.enabled: true
+
+  # Enable collection of cgroup metrics from processes on Linux.
+  #process.cgroups.enabled: true
+
+  # A list of regular expressions used to whitelist environment variables
+  # reported with the process metricset's events. Defaults to empty.
+  #process.env.whitelist: []
+
+  # Include the cumulative CPU tick values with the process metrics. Defaults
+  # to false.
+  #process.include_cpu_ticks: false
+
+  # Raid mount point to monitor
+  #raid.mount_point: '/'
+
+  # Configure reverse DNS lookup on remote IP addresses in the socket metricset.
+  #socket.reverse_lookup.enabled: false
+  #socket.reverse_lookup.success_ttl: 60s
+  #socket.reverse_lookup.failure_ttl: 60s
+
+  # Diskio configurations
+  #diskio.include_devices: []
+
+#------------------------------- Docker Module -------------------------------
+- module: docker
+  metricsets:
+    - "container"
+    - "cpu"
+    - "diskio"
+    - "healthcheck"
+    - "info"
+    #- "image"
+    - "memory"
+    - "network"
+  hosts: ["unix:///var/run/docker.sock"]
+  period: 10s
+  enabled: true
+
+  # If set to true, replace dots in labels with `_`.
+  #labels.dedot: false
+
+  # To connect to Docker over TLS you must specify a client and CA certificate.
+  #ssl:
+    #certificate_authority: "/etc/pki/root/ca.pem"
+    #certificate:           "/etc/pki/client/cert.pem"
+    #key:                   "/etc/pki/client/cert.key"
+
+#-------------------------- Elasticsearch output -------------------------------
+# output.elasticsearch:
+  # Boolean flag to enable or disable the output module.
+  #enabled: true
+
+  # Array of hosts to connect to.
+  # Scheme and port can be left out and will be set to the default (http and 9200)
+  # In case you specify and additional path, the scheme is required: http://localhost:9200/path
+  # IPv6 addresses should always be defined as: https://[2001:db8::1]:9200
+  # hosts: ["localhost:9200"]
+
+  # Set gzip compression level.
+  #compression_level: 0
+
+  # Configure escaping html symbols in strings.
+  #escape_html: true
+
+  # Optional protocol and basic auth credentials.
+  #protocol: "https"
+  #username: "elastic"
+  #password: "changeme"
+
+  # Dictionary of HTTP parameters to pass within the url with index operations.
+  #parameters:
+    #param1: value1
+    #param2: value2
+
+  # Number of workers per Elasticsearch host.
+  #worker: 1
+
+  # Optional index name. The default is "metricbeat" plus date
+  # and generates [metricbeat-]YYYY.MM.DD keys.
+  # In case you modify this pattern you must update setup.template.name and setup.template.pattern accordingly.
+  #index: "metricbeat-%{[beat.version]}-%{+yyyy.MM.dd}"
+
+  # Optional ingest node pipeline. By default no pipeline will be used.
+  #pipeline: ""
+
+  # Optional HTTP Path
+  #path: "/elasticsearch"
+
+  # Custom HTTP headers to add to each request
+  #headers:
+  #  X-My-Header: Contents of the header
+
+  # Proxy server url
+  #proxy_url: http://proxy:3128
+
+  # The number of times a particular Elasticsearch index operation is attempted. If
+  # the indexing operation doesn't succeed after this many retries, the events are
+  # dropped. The default is 3.
+  #max_retries: 3
+
+  # The maximum number of events to bulk in a single Elasticsearch bulk API index request.
+  # The default is 50.
+  #bulk_max_size: 50
+
+  # The number of seconds to wait before trying to reconnect to Elasticsearch
+  # after a network error. After waiting backoff.init seconds, the Beat
+  # tries to reconnect. If the attempt fails, the backoff timer is increased
+  # exponentially up to backoff.max. After a successful connection, the backoff
+  # timer is reset. The default is 1s.
+  #backoff.init: 1s
+
+  # The maximum number of seconds to wait before attempting to connect to
+  # Elasticsearch after a network error. The default is 60s.
+  #backoff.max: 60s
+
+  # Configure http request timeout before failing a request to Elasticsearch.
+  #timeout: 90
+
+  # Use SSL settings for HTTPS.
+  #ssl.enabled: true
+
+  # Configure SSL verification mode. If `none` is configured, all server hosts
+  # and certificates will be accepted. In this mode, SSL based connections are
+  # susceptible to man-in-the-middle attacks. Use only for testing. Default is
+  # `full`.
+  #ssl.verification_mode: full
+
+  # List of supported/valid TLS versions. By default all TLS versions 1.0 up to
+  # 1.2 are enabled.
+  #ssl.supported_protocols: [TLSv1.0, TLSv1.1, TLSv1.2]
+
+  # SSL configuration. By default is off.
+  # List of root certificates for HTTPS server verifications
+  #ssl.certificate_authorities: ["/etc/pki/root/ca.pem"]
+
+  # Certificate for SSL client authentication
+  #ssl.certificate: "/etc/pki/client/cert.pem"
+
+  # Client Certificate Key
+  #ssl.key: "/etc/pki/client/cert.key"
+
+  # Optional passphrase for decrypting the Certificate Key.
+  #ssl.key_passphrase: ''
+
+  # Configure cipher suites to be used for SSL connections
+  #ssl.cipher_suites: []
+
+  # Configure curve types for ECDHE based cipher suites
+  #ssl.curve_types: []
+
+  # Configure what types of renegotiation are supported. Valid options are
+  # never, once, and freely. Default is never.
+  #ssl.renegotiation: never
+
+
+#----------------------------- Logstash output ---------------------------------
+output.logstash:
+  # Boolean flag to enable or disable the output module.
+  #enabled: true
+
+  # The Logstash hosts
+  hosts: ["localhost:5044"]
+
+  # Number of workers per Logstash host.
+  #worker: 1
+
+  # Set gzip compression level.
+  #compression_level: 3
+
+  # Configure escaping html symbols in strings.
+  #escape_html: true
+
+  # Optional maximum time to live for a connection to Logstash, after which the
+  # connection will be re-established.  A value of `0s` (the default) will
+  # disable this feature.
+  #
+  # Not yet supported for async connections (i.e. with the "pipelining" option set)
+  #ttl: 30s
+
+  # Optional load balance the events between the Logstash hosts. Default is false.
+  #loadbalance: false
+
+  # Number of batches to be sent asynchronously to Logstash while processing
+  # new batches.
+  #pipelining: 2
+
+  # If enabled only a subset of events in a batch of events is transferred per
+  # transaction.  The number of events to be sent increases up to `bulk_max_size`
+  # if no error is encountered.
+  #slow_start: false
+
+  # The number of seconds to wait before trying to reconnect to Logstash
+  # after a network error. After waiting backoff.init seconds, the Beat
+  # tries to reconnect. If the attempt fails, the backoff timer is increased
+  # exponentially up to backoff.max. After a successful connection, the backoff
+  # timer is reset. The default is 1s.
+  #backoff.init: 1s
+
+  # The maximum number of seconds to wait before attempting to connect to
+  # Logstash after a network error. The default is 60s.
+  #backoff.max: 60s
+
+  # Optional index name. The default index name is set to metricbeat
+  # in all lowercase.
+  index: 'metricbeat-2018-09-16'
+
+  # SOCKS5 proxy server URL
+  #proxy_url: socks5://user:password@socks5-server:2233
+
+  # Resolve names locally when using a proxy server. Defaults to false.
+  #proxy_use_local_resolver: false
+
+  # Enable SSL support. SSL is automatically enabled, if any SSL setting is set.
+  #ssl.enabled: true
+
+  # Configure SSL verification mode. If `none` is configured, all server hosts
+  # and certificates will be accepted. In this mode, SSL based connections are
+  # susceptible to man-in-the-middle attacks. Use only for testing. Default is
+  # `full`.
+  #ssl.verification_mode: full
+
+  # List of supported/valid TLS versions. By default all TLS versions 1.0 up to
+  # 1.2 are enabled.
+  #ssl.supported_protocols: [TLSv1.0, TLSv1.1, TLSv1.2]
+
+  # Optional SSL configuration options. SSL is off by default.
+  # List of root certificates for HTTPS server verifications
+  #ssl.certificate_authorities: ["/etc/pki/root/ca.pem"]
+
+  # Certificate for SSL client authentication
+  #ssl.certificate: "/etc/pki/client/cert.pem"
+
+  # Client Certificate Key
+  #ssl.key: "/etc/pki/client/cert.key"
+
+  # Optional passphrase for decrypting the Certificate Key.
+  #ssl.key_passphrase: ''
+
+  # Configure cipher suites to be used for SSL connections
+  #ssl.cipher_suites: []
+
+  # Configure curve types for ECDHE based cipher suites
+  #ssl.curve_types: []
+
+  # Configure what types of renegotiation are supported. Valid options are
+  # never, once, and freely. Default is never.
+  #ssl.renegotiation: never
+
+  # The number of times to retry publishing an event after a publishing failure.
+  # After the specified number of retries, the events are typically dropped.
+  # Some Beats, such as Filebeat and Winlogbeat, ignore the max_retries setting
+  # and retry until all events are published.  Set max_retries to a value less
+  # than 0 to retry until all events are published. The default is 3.
+  #max_retries: 3
+
+  # The maximum number of events to bulk in a single Logstash request. The
+  # default is 2048.
+  #bulk_max_size: 2048
+
+  # The number of seconds to wait for responses from the Logstash server before
+  # timing out. The default is 30s.
+  #timeout: 30s
+
+
+#============================== Dashboards =====================================
+# These settings control loading the sample dashboards to the Kibana index. Loading
+# the dashboards are disabled by default and can be enabled either by setting the
+# options here, or by using the `-setup` CLI flag or the `setup` command.
+#setup.dashboards.enabled: false
+
+# The directory from where to read the dashboards. The default is the `kibana`
+# folder in the home path.
+#setup.dashboards.directory: ${path.home}/kibana
+
+# The URL from where to download the dashboards archive. It is used instead of
+# the directory if it has a value.
+#setup.dashboards.url:
+
+# The file archive (zip file) from where to read the dashboards. It is used instead
+# of the directory when it has a value.
+#setup.dashboards.file:
+
+# In case the archive contains the dashboards from multiple Beats, this lets you
+# select which one to load. You can load all the dashboards in the archive by
+# setting this to the empty string.
+#setup.dashboards.beat: metricbeat
+
+# The name of the Kibana index to use for setting the configuration. Default is ".kibana"
+#setup.dashboards.kibana_index: .kibana
+
+# The Elasticsearch index name. This overwrites the index name defined in the
+# dashboards and index pattern. Example: testbeat-*
+#setup.dashboards.index:
+
+# Always use the Kibana API for loading the dashboards instead of autodetecting
+# how to install the dashboards by first querying Elasticsearch.
+#setup.dashboards.always_kibana: false
+
+# If true and Kibana is not reachable at the time when dashboards are loaded,
+# it will retry to reconnect to Kibana instead of exiting with an error.
+#setup.dashboards.retry.enabled: false
+
+# Duration interval between Kibana connection retries.
+#setup.dashboards.retry.interval: 1s
+
+# Maximum number of retries before exiting with an error, 0 for unlimited retrying.
+#setup.dashboards.retry.maximum: 0
+
+
+#============================== Template =====================================
+
+# A template is used to set the mapping in Elasticsearch
+# By default template loading is enabled and the template is loaded.
+# These settings can be adjusted to load your own template or overwrite existing ones.
+
+# Set to false to disable template loading.
+#setup.template.enabled: true
+
+# Template name. By default the template name is "metricbeat-%{[beat.version]}"
+# The template name and pattern has to be set in case the elasticsearch index pattern is modified.
+#setup.template.name: "metricbeat-%{[beat.version]}"
+
+# Template pattern. By default the template pattern is "-%{[beat.version]}-*" to apply to the default index settings.
+# The first part is the version of the beat and then -* is used to match all daily indices.
+# The template name and pattern has to be set in case the elasticsearch index pattern is modified.
+#setup.template.pattern: "metricbeat-%{[beat.version]}-*"
+
+# Path to fields.yml file to generate the template
+#setup.template.fields: "${path.config}/fields.yml"
+
+# A list of fields to be added to the template and Kibana index pattern. Also
+# specify setup.template.overwrite: true to overwrite the existing template.
+# This setting is experimental.
+#setup.template.append_fields:
+#- name: field_name
+#  type: field_type
+
+# Enable json template loading. If this is enabled, the fields.yml is ignored.
+#setup.template.json.enabled: false
+
+# Path to the json template file
+#setup.template.json.path: "${path.config}/template.json"
+
+# Name under which the template is stored in Elasticsearch
+#setup.template.json.name: ""
+
+# Overwrite existing template
+#setup.template.overwrite: false
+
+# Elasticsearch template settings
+setup.template.settings:
+
+  # A dictionary of settings to place into the settings.index dictionary
+  # of the Elasticsearch template. For more details, please check
+  # https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html
+  #index:
+    #number_of_shards: 1
+    #codec: best_compression
+    #number_of_routing_shards: 30
+
+  # A dictionary of settings for the _source field. For more details, please check
+  # https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html
+  #_source:
+    #enabled: false
+
+#============================== Kibana =====================================
+
+# Starting with Beats version 6.0.0, the dashboards are loaded via the Kibana API.
+# This requires a Kibana endpoint configuration.
+setup.kibana:
+
+  # Kibana Host
+  # Scheme and port can be left out and will be set to the default (http and 5601)
+  # In case you specify and additional path, the scheme is required: http://localhost:5601/path
+  # IPv6 addresses should always be defined as: https://[2001:db8::1]:5601
+  #host: "localhost:5601"
+
+  # Optional protocol and basic auth credentials.
+  #protocol: "https"
+  #username: "elastic"
+  #password: "changeme"
+
+  # Optional HTTP Path
+  #path: ""
+
+  # Use SSL settings for HTTPS. Default is true.
+  #ssl.enabled: true
+
+  # Configure SSL verification mode. If `none` is configured, all server hosts
+  # and certificates will be accepted. In this mode, SSL based connections are
+  # susceptible to man-in-the-middle attacks. Use only for testing. Default is
+  # `full`.
+  #ssl.verification_mode: full
+
+  # List of supported/valid TLS versions. By default all TLS versions 1.0 up to
+  # 1.2 are enabled.
+  #ssl.supported_protocols: [TLSv1.0, TLSv1.1, TLSv1.2]
+
+  # SSL configuration. By default is off.
+  # List of root certificates for HTTPS server verifications
+  #ssl.certificate_authorities: ["/etc/pki/root/ca.pem"]
+
+  # Certificate for SSL client authentication
+  #ssl.certificate: "/etc/pki/client/cert.pem"
+
+  # Client Certificate Key
+  #ssl.key: "/etc/pki/client/cert.key"
+
+  # Optional passphrase for decrypting the Certificate Key.
+  #ssl.key_passphrase: ''
+
+  # Configure cipher suites to be used for SSL connections
+  #ssl.cipher_suites: []
+
+  # Configure curve types for ECDHE based cipher suites
+  #ssl.curve_types: []

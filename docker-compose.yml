@@ -17,8 +17,12 @@ services:
       - "9200:9200"
       - "9300:9300"
     restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
     environment:
-      ES_JAVA_OPTS: "-Xmx1g -Xms1g"
+      ES_JAVA_OPTS: "-Xmx4g -Xms4g"
     networks:
       - elk
 
@@ -34,6 +38,10 @@ services:
       - "5044:5044"
       - "9600:9600"
     restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
     environment:
       LS_JAVA_OPTS: "-Xmx1g -Xms1g"
     networks:
@@ -51,10 +59,57 @@ services:
     ports:
       - "5601:5601"
     restart: on-failure
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
     networks:
       - elk
     depends_on:
       - elasticsearch
+
+  curator:
+    build:
+      context: curator/
+    user: root
+    restart: on-failure
+    networks:
+      - elk
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+    environment:
+      CURATOR_DELAYED_START: 20
+      CURATOR_RUN_AT_START: "yes"
+      CURATOR_INTERVAL: "0 5 0 * * *"
+    depends_on:
+      - elasticsearch
+
+#   metricbeat:
+#     build:
+#       context: metricbeat/
+#     user: root
+#     volumes:
+#       - ./metricbeat/config/metricbeat.yml:/usr/share/metricbeat/config/metricbeat.yml:ro
+#     networks:
+#       - elk
+#     depends_on:
+#       - elasticsearch
+#       - logstash
+
+  # filebeat:
+  #   build:
+  #     context: filebeat/
+  #   user: root
+  #   volumes:
+  #     - ./filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+  #     - /var/lib/docker/containers:/hostfs/var/lib/docker/containers:ro
+  #   networks:
+  #     - elk
+  #   depends_on:
+  #     - elasticsearch
+  #     - logstash
 
 networks:
 
