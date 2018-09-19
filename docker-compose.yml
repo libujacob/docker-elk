@@ -68,23 +68,23 @@ services:
     depends_on:
       - elasticsearch
 
-  curator:
-    build:
-      context: curator/
-    user: root
-    restart: on-failure
-    networks:
-      - elk
-    logging:
-      driver: json-file
-      options:
-        max-size: 10m
-    environment:
-      CURATOR_DELAYED_START: 20
-      CURATOR_RUN_AT_START: "yes"
-      CURATOR_INTERVAL: "0 5 0 * * *"
-    depends_on:
-      - elasticsearch
+  # curator:
+  #   build:
+  #     context: curator/
+  #   user: root
+  #   restart: on-failure
+  #   networks:
+  #     - elk
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: 10m
+  #   environment:
+  #     CURATOR_DELAYED_START: 20
+  #     CURATOR_RUN_AT_START: "yes"
+  #     CURATOR_INTERVAL: "0 5 0 * * *"
+  #   depends_on:
+  #     - elasticsearch
 
 #   metricbeat:
 #     build:
