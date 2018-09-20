@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 
 volumes:
   elastic-data:
@@ -16,7 +16,7 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
-    restart: on-failure
+    restart: unless-stopped
     logging:
       driver: json-file
       options:
@@ -37,7 +37,7 @@ services:
     ports:
       - "5044:5044"
       - "9600:9600"
-    restart: on-failure
+    restart: unless-stopped
     logging:
       driver: json-file
       options:
@@ -58,7 +58,7 @@ services:
       - ./kibana/config/:/usr/share/kibana/config:ro
     ports:
       - "5601:5601"
-    restart: on-failure
+    restart: unless-stopped
     logging:
       driver: json-file
       options:
@@ -68,23 +68,23 @@ services:
     depends_on:
       - elasticsearch
 
-  # curator:
-  #   build:
-  #     context: curator/
-  #   user: root
-  #   restart: on-failure
-  #   networks:
-  #     - elk
-  #   logging:
-  #     driver: json-file
-  #     options:
-  #       max-size: 10m
-  #   environment:
-  #     CURATOR_DELAYED_START: 20
-  #     CURATOR_RUN_AT_START: "yes"
-  #     CURATOR_INTERVAL: "0 5 0 * * *"
-  #   depends_on:
-  #     - elasticsearch
+  curator:
+    build:
+      context: curator/
+    user: root
+    restart: unless-stopped
+    networks:
+      - elk
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+    environment:
+      CURATOR_DELAYED_START: 20
+      CURATOR_RUN_AT_START: "yes"
+      CURATOR_INTERVAL: "0 5 0 * * *"
+    depends_on:
+      - elasticsearch
 
 #   metricbeat:
 #     build:
